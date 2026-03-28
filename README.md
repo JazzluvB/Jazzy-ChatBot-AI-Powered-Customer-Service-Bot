@@ -1,4 +1,4 @@
-# Jazzy ChatBot
+# Jazzy ChatBot-AI-Powered Customer Service Bot
 
 Conversational AI chatbot built for a digital content editing agency. The bot helps potential clients explore services, get package recommendations, and connect with a human advisor when needed — all through a custom web interface.
 

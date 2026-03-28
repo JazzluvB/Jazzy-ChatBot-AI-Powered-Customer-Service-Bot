@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8" />
+  <title>ChatBot – Jozzy Creative Studio</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; height: 100%;
+      background: #1a1a1a;
+      font-family: 'DM Sans', sans-serif;
+      overflow: hidden;
+    }
+
+    /* ── Full screen window ── */
+    .window {
+      width: 100vw;
+      height: 100vh;
+      background: #b5b2b2;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Title Bar ── */
+    .titlebar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 28px 12px;
+      flex-shrink: 0;
+      background: #b5b2b2;
+    }
+    .dots { display: flex; gap: 8px; }
+    .dot { width: 13px; height: 13px; border-radius: 50%; }
+    .dot.red    { background: #e74c3c; }
+    .dot.yellow { background: #f1c40f; }
+    .dot.green  { background: #2ecc71; }
+    .title-text { text-align: right; }
+    .title-text .name {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px; font-weight: 800; color: #1a1a1a;
+      letter-spacing: 0.02em;
+    }
+    .title-text .studio { font-size: 12px; color: #444; letter-spacing: 0.04em; }
+
+    /* ── Screens ── */
+    .screen { display: none; flex: 1; flex-direction: column; overflow: hidden; min-height: 0; }
+    .screen.active { display: flex; }
+
+    /* ── SCREEN 1: Initial ── */
+    .empty-state {
+      flex: 1; display: flex;
+      flex-direction: column;
+      align-items: center; justify-content: center; gap: 16px;
+    }
+    .robot-svg {
+      width: 140px; height: 140px; opacity: 0.5;
+      animation: pulse 3s ease-in-out infinite;
+    }
+    .empty-hint {
+      font-size: 14px; color: #555; letter-spacing: 0.02em;
+    }
+    @keyframes pulse {
+      0%,100% { transform: scale(1); opacity: 0.5; }
+      50%      { transform: scale(1.04); opacity: 0.65; }
+    }
+
+    /* ── SCREEN 2: Chat ── */
+    .chat-topbar {
+      display: flex; justify-content: flex-end;
+      padding: 6px 20px 4px; flex-shrink: 0;
+    }
+    .end-btn {
+      font-size: 12px; padding: 5px 16px;
+      border-radius: 12px; border: none;
+      background: #c0392b; color: #fff;
+      cursor: pointer; font-family: 'DM Sans', sans-serif;
+      font-weight: 600; letter-spacing: 0.03em;
+      transition: background 0.2s;
+    }
+    .end-btn:hover { background: #a93226; }
+
+    .chat-area {
+      flex: 1; overflow-y: auto; min-height: 0;
+      padding: 10px 20px 12px; display: flex;
+      flex-direction: column; gap: 10px;
+      scroll-behavior: smooth;
+    }
+    .chat-area::-webkit-scrollbar { width: 4px; }
+    .chat-area::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
+
+    .msg-row { display: flex; align-items: flex-end; gap: 8px; }
+    .msg-row.user { flex-direction: row-reverse; }
+
+    .avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: #777; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+
+    .bubble {
+      max-width: 65%; padding: 10px 15px;
+      border-radius: 18px; font-size: 14px; line-height: 1.5;
+      animation: bubbleIn 0.2s ease both;
+    }
+    @keyframes bubbleIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .bubble.bot  { background: #fff; color: #1a1a1a; border-bottom-left-radius: 4px; }
+    .bubble.user { background: #2979ff; color: #fff; border-bottom-right-radius: 4px; }
+
+    .typing {
+      display: flex; gap: 5px; align-items: center;
+      padding: 10px 14px; background: #fff;
+      border-radius: 18px; border-bottom-left-radius: 4px;
+    }
+    .typing span {
+      width: 7px; height: 7px; background: #888;
+      border-radius: 50%; animation: bounce 1.2s infinite;
+    }
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%,80%,100% { transform: translateY(0); }
+      40%          { transform: translateY(-6px); }
+    }
+
+    /* ── SCREEN 3: Rating ── */
+    .rating-screen {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 20px;
+    }
+    .stars-bg {
+      position: relative; width: 200px; height: 160px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .star-dec { position: absolute; color: #1a1a1a; }
+    .star-dec.tl { font-size: 36px; top: 0;    left: 0; }
+    .star-dec.tr { font-size: 36px; top: 0;    right: 0; }
+    .star-dec.tc { font-size: 28px; top: -6px; left: 50%; transform: translateX(-50%); }
+    .star-dec.bl { font-size: 24px; bottom: 14px; left: 14px; }
+    .star-dec.br { font-size: 24px; bottom: 14px; right: 14px; }
+    .rating-icon {
+      width: 110px; height: 110px; border-radius: 50%;
+      background: #1a1a1a;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .rating-label {
+      font-family: 'Syne', sans-serif; font-size: 15px;
+      font-weight: 700; color: #1a1a1a;
+      letter-spacing: 0.12em; text-transform: uppercase;
+    }
+    .stars-input { display: flex; gap: 8px; }
+    .stars-input span {
+      font-size: 38px; cursor: pointer; color: #aaa;
+      transition: color 0.15s, transform 0.15s; user-select: none;
+    }
+    .stars-input span.lit { color: #f1c40f; transform: scale(1.15); }
+    .rating-btn {
+      padding: 10px 36px; background: #1a1a1a; color: #fff;
+      border: none; border-radius: 24px;
+      font-family: 'DM Sans', sans-serif; font-size: 14px;
+      cursor: pointer; transition: background 0.2s;
+      letter-spacing: 0.03em;
+    }
+    .rating-btn:hover { background: #333; }
+    .rating-btn:disabled { background: #555; cursor: default; }
+
+    /* ── Input Bar ── */
+    .input-bar {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 20px 20px; flex-shrink: 0;
+    }
+    .input-wrap {
+      flex: 1; background: #f0eeee; border-radius: 28px;
+      border: 1px solid #7a7878; display: flex;
+      align-items: center; padding: 0 18px; height: 46px;
+    }
+    .input-wrap input {
+      flex: 1; background: transparent; border: none; outline: none;
+      font-family: 'DM Sans', sans-serif; font-size: 14px; color: #1a1a1a;
+    }
+    .input-wrap input::placeholder { color: #999; }
+    .send-btn {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: #3a7d44; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s, transform 0.15s; flex-shrink: 0;
+    }
+    .send-btn:hover  { background: #2e6636; transform: scale(1.07); }
+    .send-btn:active { transform: scale(0.95); }
+    .send-btn svg { width: 18px; height: 18px; fill: #fff; }
+  </style>
+</head>
+<body>
+
+<div class="window">
+
+  <!-- Title Bar -->
+  <div class="titlebar">
+    <div class="dots">
+      <div class="dot red"></div>
+      <div class="dot yellow"></div>
+      <div class="dot green"></div>
+    </div>
+    <div class="title-text">
+      <div class="name">ChatBot</div>
+      <div class="studio">Jozzy Creative Studio</div>
+    </div>
+  </div>
+
+  <!-- SCREEN 1: Initial -->
+  <div class="screen active" id="screen1">
+    <div class="empty-state">
+      <svg class="robot-svg" viewBox="0 0 100 100" fill="none">
+        <rect x="28" y="38" width="44" height="36" rx="10" fill="#555"/>
+        <rect x="36" y="48" width="10" height="10" rx="3" fill="#ddd"/>
+        <rect x="54" y="48" width="10" height="10" rx="3" fill="#ddd"/>
+        <rect x="38" y="64" width="24" height="5" rx="2.5" fill="#ddd"/>
+        <rect x="46" y="28" width="8" height="12" rx="4" fill="#555"/>
+        <circle cx="50" cy="24" r="6" fill="#555"/>
+        <rect x="18" y="46" width="8" height="18" rx="4" fill="#555"/>
+        <rect x="74" y="46" width="8" height="18" rx="4" fill="#555"/>
+        <rect x="34" y="74" width="10" height="14" rx="5" fill="#555"/>
+        <rect x="56" y="74" width="10" height="14" rx="5" fill="#555"/>
+        <rect x="60" y="14" width="28" height="20" rx="6" fill="#777"/>
+        <circle cx="68" cy="24" r="2.5" fill="#ddd"/>
+        <circle cx="74" cy="24" r="2.5" fill="#ddd"/>
+        <circle cx="80" cy="24" r="2.5" fill="#ddd"/>
+        <path d="M65 34 L62 40 L70 34Z" fill="#777"/>
+      </svg>
+      <p class="empty-hint">¿En qué puedo ayudarte hoy?</p>
+    </div>
+    <div class="input-bar">
+      <div class="input-wrap">
+        <input id="inp1" type="text" placeholder="Escribe Tu Mensaje" autocomplete="off"/>
+      </div>
+      <button class="send-btn" id="btn1">
+        <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: Chat activo -->
+  <div class="screen" id="screen2">
+    <div class="chat-topbar">
+      <button class="end-btn" id="endBtn">Terminar chat</button>
+    </div>
+    <div class="chat-area" id="chatArea"></div>
+    <div class="input-bar">
+      <div class="input-wrap">
+        <input id="inp2" type="text" placeholder="Escribe Tu Mensaje" autocomplete="off"/>
+      </div>
+      <button class="send-btn" id="btn2">
+        <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: Calificación -->
+  <div class="screen" id="screen3">
+    <div class="rating-screen">
+      <div class="stars-bg">
+        <span class="star-dec tl">★</span>
+        <span class="star-dec tr">★</span>
+        <span class="star-dec tc">★</span>
+        <span class="star-dec bl">★</span>
+        <span class="star-dec br">★</span>
+        <div class="rating-icon">
+          <svg width="64" height="64" viewBox="0 0 50 50" fill="none">
+            <circle cx="25" cy="18" r="10" fill="#fff"/>
+            <path d="M5 46c0-11 9-18 20-18s20 7 20 18" fill="#fff"/>
+          </svg>
+        </div>
+      </div>
+      <div class="rating-label">Califica Este Chat</div>
+      <div class="stars-input" id="starsInput">
+        <span data-v="1">★</span>
+        <span data-v="2">★</span>
+        <span data-v="3">★</span>
+        <span data-v="4">★</span>
+        <span data-v="5">★</span>
+      </div>
+      <button class="rating-btn" id="ratingBtn">Enviar</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const WEBHOOK  = 'https://jazzysevensickznine.app.n8n.cloud/webhook/4f7f644b-fa6c-43b1-a6e7-2380d2acc6be/chat';
+  const SESSION  = 'sess_' + Math.random().toString(36).slice(2);
+  const chatArea = document.getElementById('chatArea');
+  let rating = 0;
+
+  function goTo(n) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen' + n).classList.add('active');
+  }
+
+  function addBubble(text, role) {
+    const row = document.createElement('div');
+    row.className = 'msg-row ' + role;
+    const av  = document.createElement('div');
+    av.className = 'avatar';
+    av.textContent = role === 'bot' ? '🤖' : '👤';
+    const bub = document.createElement('div');
+    bub.className = 'bubble ' + role;
+    bub.textContent = text;
+    if (role === 'bot') { row.appendChild(av); row.appendChild(bub); }
+    else                { row.appendChild(bub); row.appendChild(av); }
+    chatArea.appendChild(row);
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }
+
+  function showTyping() {
+    const row = document.createElement('div');
+    row.className = 'msg-row bot'; row.id = 'typRow';
+    const av = document.createElement('div');
+    av.className = 'avatar'; av.textContent = '🤖';
+    const t  = document.createElement('div');
+    t.className = 'typing';
+    t.innerHTML = '<span></span><span></span><span></span>';
+    row.appendChild(av); row.appendChild(t);
+    chatArea.appendChild(row);
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }
+
+  function removeTyping() {
+    const t = document.getElementById('typRow');
+    if (t) t.remove();
+  }
+
+  async function send(text) {
+    if (!text.trim()) return;
+    goTo(2);
+    addBubble(text, 'user');
+    showTyping();
+    try {
+      const res  = await fetch(WEBHOOK, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, sessionId: SESSION })
+      });
+      const data = await res.json();
+      removeTyping();
+      const reply = data.output || data.text || data.message || data.response
+        || (Array.isArray(data) && (data[0]?.output || data[0]?.text))
+        || 'Sin respuesta.';
+      addBubble(reply, 'bot');
+    } catch {
+      removeTyping();
+      addBubble('Error de conexión. Intenta de nuevo.', 'bot');
+    }
+  }
+
+  // Screen 1
+  const inp1 = document.getElementById('inp1');
+  document.getElementById('btn1').onclick = () => { send(inp1.value); inp1.value = ''; };
+  inp1.onkeydown = e => { if (e.key === 'Enter') { send(inp1.value); inp1.value = ''; } };
+
+  // Screen 2
+  const inp2 = document.getElementById('inp2');
+  document.getElementById('btn2').onclick = () => { send(inp2.value); inp2.value = ''; };
+  inp2.onkeydown = e => { if (e.key === 'Enter') { send(inp2.value); inp2.value = ''; } };
+
+  // Terminar chat
+  document.getElementById('endBtn').onclick = () => goTo(3);
+
+  // Stars
+  const starEls = document.querySelectorAll('#starsInput span');
+  starEls.forEach(s => {
+    s.onclick = () => {
+      rating = +s.dataset.v;
+      starEls.forEach(x => x.classList.toggle('lit', +x.dataset.v <= rating));
+    };
+  });
+
+  // Enviar calificación
+  document.getElementById('ratingBtn').onclick = () => {
+    if (!rating) return;
+    fetch(WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rating, sessionId: SESSION })
+    });
+    const btn = document.getElementById('ratingBtn');
+    btn.textContent = '¡Gracias! ✓';
+    btn.disabled = true;
+  };
+</script>
+
+</body>
+</html>

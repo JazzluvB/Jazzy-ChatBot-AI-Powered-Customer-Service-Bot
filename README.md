@@ -82,6 +82,6 @@ This was my first end-to-end AI automation project. I learned how to design and 
 
 ## Contact
 
-Built by a freelance developer for Jozzy Creative Studio.
+Built by a freelance developer for Jazzy Creative Studio.
 
 For service inquiries or collaboration: [discord.gg/7d25e2nS](https://discord.gg/7d25e2nS)
